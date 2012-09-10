@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Cyber Tactics 0.4</title>
+<meta charset="utf-8" />
+<link rel="stylesheet" href="ct.css">
+<script type="text/javascript">
+
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-29211605-1']);
+  _gaq.push(['_trackPageview']);
+
+  (function() {
+    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+  })();
+
+</script>
+
+</head>
+
+<body>
+
+
+<div id='titleScreen' class='screen'>
+<img id='titleImage' src='./images/title-000.png' class='button'></img><br>
+<img src='./images/newgame.png' onclick=displayNewGame() class='button'></img><br>
+</div>
+
+
+<div id='newGame' class='screen' style='visibility:hidden'>
+	<img src='./images/title-000.png' style='border:1px solid black'></img><br>
+	Select Your Team:<br>
+
+	<img id='playerSelect1' src='./images/char-000.png'/>
+	Team Member 1 <select id='teamMember1'>	
+	<option value='0'>Spy</option>
+	<option value='1'>Mech</option>
+	<option value='2'>Soldier</option>
+	</select>
+	 <br>
+	<img id='playerSelect2' src='./images/char-000.png'/>
+	Team Member 2 
+	<select id='teamMember2'>	
+	<option value='0'>Spy</option>
+	<option value='1'>Mech</option>
+	<option value='2'>Soldier</option>
+	</select>
+	<br>
+	<img id='playerSelect3' src='./images/char-000.png'/>
+	Team Member 3 
+	<select id='teamMember3'>	
+	<option value='0'>Spy</option>
+	<option value='1'>Mech</option>
+	<option value='2'>Soldier</option>
+	</select><br>
+	<img src='./images/newgame.png' onclick=displayMissionSelect() style='border:1px solid black'></img><br>
+</div>
+
+
+
+
+<div id='statsScreen' class='screen' style='visibility:hidden'>
+<table>
+<tr>
+	<td colspan=2>Statistics</td>
+</tr>
+<tr>
+<td>Kills: </td><td id='statsKills'></td>
+</tr>
+<tr>
+<td>Damage Taken: </td><td id='statsDamageTaken'></td>
+</tr>
+<tr>
+<td>Damage Applied: </td><td id='statsDamageApplied'></td>
+</tr>
+<tr>
+<td>Turns Taken: </td><td id='statsTurnsTaken'></td>
+</tr>
+</table>
+<img src='./images/continue.png' onclick=displayMissionSelect() style='border:1px solid black'></img><br>
+</div>
+
+<div id='missionSelect' class='screen' style='visibility:hidden'>
+Missions:
+<table id='missionList'>
+</table>
+</div>
+
+<canvas class='plane' id='background' style='visibility:hidden'></canvas>
+<canvas class='plane' id='characters' style='visibility:hidden'></canvas>
+<canvas class='plane' id='foreground' style='visibility:hidden'></canvas>
+
+<div class='sidebar' id='editor' style='visibility:hidden'>
+Width: <input id='width' value='100'></input><br> 
+Height: <input id='height' value='100'></input> <br>
+<button id='newMap' onclick=newMap()>New Map</button> <br>
+
+
+CutScene: <input id='cutScene'></input><br>
+<button id='updateMapData' onclick=updateMapData()>Update Cutscene</button><br>
+
+
+Tool: <select id='editorTool'>
+<option value='Paint'>Paint Tiles</option>
+<option value='Edit' selected='selected'>Edit Tiles</option>
+<option value='Block'>Block Toggle</option>
+</select>
+
+
+<div id='EditTool'>
+	</select><br>
+	Edit Tile:<br>
+	
+	xPos: <input id='xPos' readonly="readonly"></input><br>
+	yPos: <input id='yPos' readonly="readonly"></input><br>
+	Type: <select id='tileType'>
+	<option value='0'>TILE_OPEN</option>
+	<option value='1'>TILE_BLOCKED</option>
+	</select><br>
+	Special Flag <select id='specialFlag'>
+	<option value='0'>N/A</option>
+	<option value='1'>Player Spawn</option>
+	<option value='2'>Exit</option>
+	<option value='3'>Hack</option>
+	<option value='4'>Door</option>
+	<option value='5'>Teleporter</option>
+	<option value='6'>Enemy Spawn</option>
+	<option value='7'>Step on Switch</option>
+	<option value='8'>Environment Damage</option>
+	</select><br>
+	<!--Map Destination: <input id='mapDestination'></input><br>-->
+	Spawn Point ID: <input id='spawnID' value='-1'></input><br>
+	Enemy Spawn Type: <select id='enemySpawnID'>
+	<option value='0'>ENTITY_SPY</option>
+	<option value='1'>ENTITY_MECH</option>
+	<option value='2'>ENTITY_SOLDIER</option>
+	<option value='3'>ENTITY_SENTRY</option>
+	</select>
+	Enemy Spawn Trigger: <input id='enemySpawnTrigger' value='-1'></input> (-1 means spawn on load. Delayed spawn: Step on Switch & Enemy Spawn values should match)<br>
+	Switch Item Required: <input id='switchItemRequired' value='-1'></input> (-1 means not required, any other number is the inventory id)<br>
+	<br>
+	<u>Teleporter Target:</u><br>
+	TargetX: <input id='targetX' value='0'></input><br>
+	TargetY: <input id='targetY' value='0'></input><br>
+	Hacking: <br>
+	Terminal Network: <input id='network' value='-1'></input><br>
+
+	<!--Completes Level: <input id='completesLevel' value='0'></input> =1 completes level on step, 0 is normal<br>-->
+
+	<button id='update' onclick='updateTile()'>Update Tile</button>
+</div>
+
+
+<div id='PaintTool' style='display:none'>
+	Tile Palette:<br>
+	<input id='decalLayer' type="checkbox">Paint Decals</input>
+	<div id='tiles'></div><br>
+</div>
+</div>
+
+
+<div class='sidebar' id='playerDetails' style='visibility:hidden'>
+<img id='selectedPlayerImage' style="width:64px;height:64px"></img><br>
+<table><tr><td>Health: </td><td><div class='healthContainer' id='maxHealth'><div class='health' id='currentHealth'></div></div></td></tr>
+<tr><td><div id='movesLeft'></div></tr></table>
+Actions:<br>
+<button id='attackEntity' onclick=enableAttackMode()>Attack</button> 
+<button id='cancelAttack' onclick=disableAttackMode()>Cancel Attack</button> <br>
+<button id='enableStealth' onclick=enableStealth()>Enable Stealth Suit</button>
+<button id='disableStealth' onclick=disableStealth()>Disable Stealth Suit</button><br>
+<button id='hackTerminal' onclick=enableHackMode()>Hack Terminal</button><br>
+Statistics:<br>
+
+<table>
+	<tr><td>Dexterity:</td><td id='calcDexterity'></td></tr>
+	<tr><td>Focus:</td><td id='calcFocus'></td></tr>
+	<tr><td>Stealth:</td><td id='calcStealth'></td></tr>
+<tr><td>Hacking:</td><td id='calcHacking'></td></tr>
+<tr><td>Damage:</td><td id='calcDamage'></td></tr>
+<tr><td>Armour:</td><td id='calcArmour'></td></tr>
+<tr><td>Critical Hit Chance:</td><td id='calcCritChance'></td></tr>
+<tr><td>Critical Hit Resist Chance:</td><td id='calcCritResistChance'></td></tr>
+</table>
+Inventory: <br>
+<div id='inventory'></div>
+Item at this location:<br>
+<div id='loot'></div>
+
+</div>
+
+
+<div id='buttons' style='position:absolute; top:640px'>
+<button id='nextTurn' onclick=nextTurn()>Next Turn</button><button id='editMode' onclick=editModeFlag()>Edit Mode</button>
+</div>
+
+
+</body>
+<script src="constants.js"></script>
+<script src="game.js"></script>
+<script src='gameui.js'></script>
+
+</html>

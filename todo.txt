@@ -1,0 +1,23 @@
+TODO:
+
+Short Term:
+* bringing up menu / return to game button
+
+Mid Term:
+* health kits
+
+Longer Term:
+* Saving the game progress
+* sound engine done, need a background music object?
+* sound on cut scenes/music
+* Native App
+
+Nice to have:
+* rebuild rendering for firefox
+* Firefox audio
+* Lighting
+
+Bugs:
+* Death of player to spikes doesnt kill
+* Can still attack a sentry that has been turned
+
