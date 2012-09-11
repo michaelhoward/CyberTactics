@@ -29,7 +29,7 @@ function populateTileSelector()
 var tileSelector = document.getElementById('tiles');
 tileSelector.innerHTML = "";
 
-	for (var i=0; i<gameData.tilesToCache; i++)
+	for (var i=0; i<gameData.tileCache.length; i++)
 	{
 		var tempImage = gameData.tileCache[i];
 		tempImage.id = i;
@@ -53,6 +53,8 @@ function populateTileEditor(x, y)
 	document.getElementById('targetY').value = world.currentMap.tiles[x][y].targetY;
 	document.getElementById('network').value = world.currentMap.tiles[x][y].network;
 	document.getElementById('switchItemRequired').value = world.currentMap.tiles[x][y].switchItemRequired;
+	document.getElementById('item').value = world.currentMap.tiles[x][y].switchItemRequired;
+	
 	//document.getElementById('completesLevel').value = world.currentMap.tiles[x][y].completesLevel;
 }
 
@@ -64,13 +66,14 @@ function updateTile()
 	world.currentMap.tiles[x][y].type = document.getElementById('tileType').value;
 	world.currentMap.tiles[x][y].flag = document.getElementById('specialFlag').value;
 	//world.currentMap.tiles[x][y].mapDestination = document.getElementById('mapDestination').value;
-	world.currentMap.tiles[x][y].spawnID = document.getElementById('spawnID').value;
-	world.currentMap.tiles[x][y].enemySpawnID = document.getElementById('enemySpawnID').value;
-	world.currentMap.tiles[x][y].enemySpawnTrigger = document.getElementById('enemySpawnTrigger').value;
-	world.currentMap.tiles[x][y].targetX = document.getElementById('targetX').value;
-	world.currentMap.tiles[x][y].targetY = document.getElementById('targetY').value;
-	world.currentMap.tiles[x][y].network = document.getElementById('network').value;
-	world.currentMap.tiles[x][y].switchItemRequired = document.getElementById('switchItemRequired').value;
+	world.currentMap.tiles[x][y].spawnID = parseInt(document.getElementById('spawnID').value);
+	world.currentMap.tiles[x][y].enemySpawnID = parseInt(document.getElementById('enemySpawnID').value);
+	world.currentMap.tiles[x][y].enemySpawnTrigger = parseInt(document.getElementById('enemySpawnTrigger').value);
+	world.currentMap.tiles[x][y].targetX = parseInt(document.getElementById('targetX').value);
+	world.currentMap.tiles[x][y].targetY = parseInt(document.getElementById('targetY').value);
+	world.currentMap.tiles[x][y].network = parseInt(document.getElementById('network').value);
+	world.currentMap.tiles[x][y].switchItemRequired = parseInt(document.getElementById('switchItemRequired').value);
+	world.currentMap.tiles[x][y].item = parseInt(document.getElementById('item').value);
 	//world.currentMap.tiles[x][y].completesLevel = document.getElementById('completesLevel').value;
 }
 
@@ -92,10 +95,19 @@ function editorScreenClick(e)
 	case TOOL_PAINT:
 		if (document.getElementById('decalLayer').checked == true)
 		{
-			world.currentMap.tiles[clickedX][clickedY].decalImage = editor.selectedTileImage;
+			//if its already this decal, clear it
+			if (world.currentMap.tiles[clickedX][clickedY].decalImage == editor.selectedTileImage)
+			{
+				world.currentMap.tiles[clickedX][clickedY].decalImage = -1;
+			}
+			else
+			{
+				world.currentMap.tiles[clickedX][clickedY].decalImage = editor.selectedTileImage;
+			}
 		}
 		else
 		{
+			
 			world.currentMap.tiles[clickedX][clickedY].image = editor.selectedTileImage;
 		}
 		
@@ -305,6 +317,8 @@ function disableHackMode()
 function updateMapData()
 {
 	world.currentMap.cutScene = document.getElementById('cutScene').value;
+	world.currentMap.startX = document.getElementById('startX').value;
+	world.currentMap.startY = document.getElementById('startY').value;
 }
 
 
@@ -416,11 +430,11 @@ function updatePlayerDetails()
 	var loot = document.getElementById('loot');
 	loot.innerHTML = "";
 
+	var lootItem = parseInt(world.currentMap.tiles[xPos][yPos].item);
 
-
-	if (world.currentMap.tiles[xPos][yPos].item >= 0)
+	if (lootItem >= 0)
 	{
-		var tempLoot = new InventoryItem(world.currentMap.tiles[xPos][yPos].item);
+		var tempLoot = new InventoryItem(lootItem);
 		Log(tempLoot.image);
 		var tempImage = gameData.imageCache[tempLoot.image];
 		tempImage.id = 'lootImage';

@@ -64,7 +64,7 @@
 <div id='statsScreen' class='screen' style='visibility:hidden'>
 <table>
 <tr>
-	<td colspan=2>Statistics</td>
+	<td colspan=2><img src='./images/statistics.png'></img></td>
 </tr>
 <tr>
 <td>Kills: </td><td id='statsKills'></td>
@@ -83,7 +83,7 @@
 </div>
 
 <div id='missionSelect' class='screen' style='visibility:hidden'>
-Missions:
+<img src='./images/available_missions.png' style='border:1px solid black'></img><br>
 <table id='missionList'>
 </table>
 </div>
@@ -99,7 +99,9 @@ Height: <input id='height' value='100'></input> <br>
 
 
 CutScene: <input id='cutScene'></input><br>
-<button id='updateMapData' onclick=updateMapData()>Update Cutscene</button><br>
+Start X: <input id='startX'></input><br>
+Start Y: <input id='startY'></input><br>
+<button id='updateMapData' onclick=updateMapData()>Update Map Data</button><br>
 
 
 Tool: <select id='editorTool'>
@@ -113,8 +115,7 @@ Tool: <select id='editorTool'>
 	</select><br>
 	Edit Tile:<br>
 	
-	xPos: <input id='xPos' readonly="readonly"></input><br>
-	yPos: <input id='yPos' readonly="readonly"></input><br>
+	xPos/yPos: <input id='xPos' readonly="readonly"></input><input id='yPos' readonly="readonly"></input><br>
 	Type: <select id='tileType'>
 	<option value='0'>TILE_OPEN</option>
 	<option value='1'>TILE_BLOCKED</option>
@@ -142,11 +143,10 @@ Tool: <select id='editorTool'>
 	Switch Item Required: <input id='switchItemRequired' value='-1'></input> (-1 means not required, any other number is the inventory id)<br>
 	<br>
 	<u>Teleporter Target:</u><br>
-	TargetX: <input id='targetX' value='0'></input><br>
-	TargetY: <input id='targetY' value='0'></input><br>
+	TX/TY: <input id='targetX' value='0'></input><input id='targetY' value='0'></input><br>
 	Hacking: <br>
 	Terminal Network: <input id='network' value='-1'></input><br>
-
+	Item: <input id='item' value='-1'></input><br>
 	<!--Completes Level: <input id='completesLevel' value='0'></input> =1 completes level on step, 0 is normal<br>-->
 
 	<button id='update' onclick='updateTile()'>Update Tile</button>

@@ -39,7 +39,7 @@ var gameData = new Object();
 var editor = new Object();
 
 // initialising the caching infrastructure as this happens before the rest of the game init
-gameData.tileCache = new Array(100);
+gameData.tileCache = new Array();
 gameData.imageCache = new Array(100);
 
 gameData.soundCache = new Array();
@@ -57,7 +57,7 @@ gameData.cutSceneCounter = 0;
 gameData.cutSceneSkip = false;
 
 // Maps
-gameData.maps[0] = new missionData('map1.json', 'Tutorial','A Tutorial for how to play the game', true, [1,2]);
+gameData.maps[0] = new missionData('map1.json', 'Basic Training','Enter the training complex and capture the blue key', true, [1,2]);
 gameData.maps[1] = new missionData('map2.json', 'First Try','First Simple mission', false);
 gameData.maps[2] = new missionData('map3.json', 'second Try','Slightly harder mission', false);
 gameData.currentMapNumber = -1;
@@ -156,6 +156,8 @@ function map(width, height)
 	this.tiles = new Array();
 	this.width = width;
 	this.height = height;
+	this.startX = 0;
+	this.startY = 0;
 	this.cutScene = -1;
 	
 	for (var i=0; i<width; i++)
@@ -344,6 +346,11 @@ function InventoryItem(type)
 
 function entityIsInInventory(type)
 {
+	if (type == -1)
+	{
+		return true;
+	}
+
 	for (var i=0; i<this.inventory.length; i++)
 	{
 		if (this.inventory[i].type == type)
@@ -781,7 +788,11 @@ function Entity(type, x, y, team, network)
 		
 		this.deathFrame = ENTITY_SENTRY_DEAD;
 		
-		this.teleportingAnimation[0] = ENTITY_NULL_IMAGE;
+		this.teleportingAnimation[0] = ENTITY_SENTRY_TELEPORTING_1;
+		this.teleportingAnimation[1] = ENTITY_SENTRY_TELEPORTING_2;
+		this.teleportingAnimation[2] = ENTITY_SENTRY_TELEPORTING_3;
+		this.teleportingAnimation[3] = ENTITY_SENTRY_TELEPORTING_4;
+		
 		
 		this.baseDexterity = 0;
 
@@ -1076,14 +1087,14 @@ function entityProcessSpecialTiles()
 
 		if ((world.currentMap.tiles[this.xPos][this.yPos].switchTriggered == false)&&(this.isInInventory(world.currentMap.tiles[this.xPos][this.yPos].switchItemRequired)))
 		{	
-			if (this.enemySpawnTrigger >=0)
+			if (world.currentMap.tiles[this.xPos][this.yPos].enemySpawnTrigger >=0)
 			{
 				for (var i=0; i<world.currentMap.width; i++)
 				{
 					for (var j=0; j<world.currentMap.height; j++)
 					{
 
-						if ((world.currentMap.tiles[i][j].flag == TILE_TYPE_ENEMY_SPAWN)&&(world.currentMap.tiles[i][j].enemySpawnTrigger == this.enemySpawnTrigger))
+						if ((world.currentMap.tiles[i][j].flag == TILE_TYPE_ENEMY_SPAWN)&&(world.currentMap.tiles[i][j].enemySpawnTrigger == world.currentMap.tiles[this.xPos][this.yPos].enemySpawnTrigger))
 						{
 							spawnEntityInMap(world.currentMap.tiles[i][j].enemySpawnID, i, j, world.currentMap.tiles[i][j].network, true);
 
@@ -1097,9 +1108,11 @@ function entityProcessSpecialTiles()
 			var targetX = world.currentMap.tiles[this.xPos][this.yPos].targetX;
 			var targetY = world.currentMap.tiles[this.xPos][this.yPos].targetY;
 			
-			if ((targetX >=0)&&(targetY >=0))
+			if ((targetX >0)&&(targetY >0))
 			{
 				unlockDoor(targetX, targetY);
+				generateBaseMap();
+				screen.backgroundChanged = true;
 			}
 
 			world.currentMap.tiles[this.xPos][this.yPos].switchTriggered = true;
@@ -1497,19 +1510,27 @@ function gameLoop()
 		
 		if ((world.turn == TURN_AI)&&(world.aiTimer == 0))
 		{
-		
-			if (world.currentMap.entities[world.aiCurrentEntity].movesLeft() > 0)
-			{
 
-				world.currentMap.entities[world.aiCurrentEntity].processAI();
+
+			if (world.currentMap.entities.length == 0)
+			{
+				world.aiTurnOver = true;
 			}
 			else
-			{
-				world.aiCurrentEntity++;
-
-				if (world.aiCurrentEntity >= world.currentMap.entities.length)
+			{	
+				if (world.currentMap.entities[world.aiCurrentEntity].movesLeft() > 0)
 				{
+
+					world.currentMap.entities[world.aiCurrentEntity].processAI();
+				}
+				else
+				{
+					world.aiCurrentEntity++;
+
+					if (world.aiCurrentEntity >= world.currentMap.entities.length)
+					{
 					world.aiTurnOver = true;
+					}
 				}
 			}
 			
@@ -2017,6 +2038,14 @@ function LoadMap(id)
 	
 	findMapEntrance();
 	
+
+	if (world.currentMap.startX)
+	{
+		screen.xPos = parseInt(world.currentMap.startX);
+		screen.yPos = parseInt(world.currentMap.startY);
+	}
+
+
 	if ((world.currentMap.cutScene >= 0)&&(gameData.cutScenes[world.currentMap.cutScene].played == false))
 	{
 		Log('Triggering Cut Scene '+world.currentMap.cutScene);
@@ -2053,6 +2082,11 @@ function newMap()
 	var height = document.getElementById('height').value;
 	
 	world.currentMap = new map(width, height);
+	screen.xPos = 0;
+	screen.yPos = 0;
+	screen.currentPosX = 0;
+	screen.currentPosY = 0;
+
 	processEntitySpawnPoints();
 	generateBaseMap();
 	screen.backgroundChanged = true;
@@ -2107,21 +2141,21 @@ function findMapEntrance()
 			if (world.currentMap.tiles[i][j].flag == TILE_TYPE_PLAYER_SPAWN)
 			
 			{ 
-				if (world.currentMap.tiles[i][j].spawnID == 1)
+				if (world.currentMap.tiles[i][j].spawnID == 0)
 				{
 					Log('spawn point found for player 1');
 					world.players[0].xPos = i;
 					world.players[0].yPos = j;
 					found1 = true;
 				}
-				if (world.currentMap.tiles[i][j].spawnID == 2)
+				if (world.currentMap.tiles[i][j].spawnID == 1)
 				{
 					Log('spawn point found for player 2');
 					world.players[1].xPos = i;
 					world.players[1].yPos = j;
 					found2 = true;
 				}
-				if (world.currentMap.tiles[i][j].spawnID == 3)
+				if (world.currentMap.tiles[i][j].spawnID == 2)
 				{
 					Log('spawn point found for player 3');
 					world.players[2].xPos = i;
@@ -2469,7 +2503,7 @@ function loadSounds()
 function incrementCacheAndRun()
 {
 	gameData.numCacheLoaded++;
-	if (gameData.numCacheLoaded == gameData.tilesToCache)
+	if (gameData.numCacheLoaded == gameData.tileCache.length)
 	{
 		Log('Caching complete');
 		init();
@@ -2480,62 +2514,86 @@ function loadTiles()
 {
 
 	gameData.numCacheLoaded = 0;
-	gameData.tilesToCache = 41;
-
-
-	loadTile(0,'./images/void-000.png');
-
-	loadTile(1,'./images/wall-000.png');
-	loadTile(2,'./images/wall-001.png');
-	loadTile(3,'./images/wall-002.png');
-	loadTile(4,'./images/wall-003.png');
-	loadTile(5,'./images/wall-004.png');
-	loadTile(6,'./images/wall-005.png');
-	loadTile(7,'./images/wall-006.png');
-	loadTile(8,'./images/wall-007.png');
-	loadTile(9,'./images/wall-008.png');
-	loadTile(10,'./images/wall-009.png');
-	loadTile(11,'./images/wall-010.png');
-	loadTile(12,'./images/wall-011.png');
-	loadTile(13,'./images/wall-012.png');
-	loadTile(14,'./images/wall-013.png');
-	loadTile(15,'./images/wall-014.png');
-	loadTile(16,'./images/wall-015.png');
 	
-	loadTile(17,'./images/floor-000.png');	
-	loadTile(18,'./images/floor-001.png');
-	loadTile(19,'./images/floor-002.png');
+//Dont move these out of order as it affects map images
 
-	loadTile(20, './images/decal-door-00.png');
-	loadTile(21, './images/decal-door-01.png');	
-	loadTile(22, './images/decal-hack.png');
-	loadTile(21, './images/decal-pipes.png');	
-	loadTile(23, './images/decal-station-01.png');
-	loadTile(24, './images/decal-table.png');	
-	loadTile(25, './images/decal-teleporter.png');	
-	loadTile(26, './images/decal-door-02.png');
-	loadTile(27, './images/decal-door-03.png');
-	loadTile(28, './images/decal-spikes.png');
-	loadTile(29, './images/decal-sector-01.png');
-	loadTile(30, './images/decal-sector-02.png');
-	loadTile(31, './images/decal-slime.png');
-	loadTile(32, './images/decal-station-02.png');
-	loadTile(33, './images/decal-radiation.png');
-	loadTile(34, './images/wall-016.png');
-	loadTile(35, './images/wall-017.png');
-	loadTile(36, './images/wall-018.png');
+	loadTile('./images/void-000.png');
 
-	loadTile(37, './images/floor-003.png');
+	loadTile('./images/wall-000.png');
+	loadTile('./images/wall-001.png');
+	loadTile('./images/wall-002.png');
+	loadTile('./images/wall-003.png');
+	loadTile('./images/wall-004.png');
+	loadTile('./images/wall-005.png');
+	loadTile('./images/wall-006.png');
+	loadTile('./images/wall-007.png');
+	loadTile('./images/wall-008.png');
+	loadTile('./images/wall-009.png');
+	loadTile('./images/wall-010.png');
+	loadTile('./images/wall-011.png');
+	loadTile('./images/wall-012.png');
+	loadTile('./images/wall-013.png');
+	loadTile('./images/wall-014.png');
+	loadTile('./images/wall-015.png');
+	loadTile( './images/wall-016.png');
+	loadTile( './images/wall-017.png');
+	loadTile( './images/wall-018.png');
+	loadTile( './images/wall-019.png');
+	loadTile( './images/wall-020.png');
+	loadTile( './images/wall-021.png');
+	loadTile( './images/wall-022.png');
+	loadTile( './images/wall-023.png');
+	loadTile( './images/wall-024.png');
+	loadTile( './images/wall-025.png');
+	loadTile( './images/wall-026.png');
+	loadTile( './images/wall-027.png');
 
-	loadTile(38, './images/inv-key-red.png');
-	loadTile(39, './images/inv-key-blu.png');
-	loadTile(40, './images/decal-exit.png');
 
+	loadTile('./images/floor-000.png');	
+	loadTile('./images/floor-001.png');
+	loadTile('./images/floor-002.png');
+	loadTile('./images/floor-003.png');
+	loadTile('./images/floor-004.png');
+	loadTile('./images/floor-005.png');
+
+	loadTile( './images/road-000.png');
+	loadTile( './images/road-001.png');
+	loadTile( './images/road-002.png');
+	loadTile( './images/road-003.png');
+
+	loadTile( './images/decal-door-00.png');
+	loadTile( './images/decal-door-01.png');
+	loadTile( './images/decal-door-02.png');
+	loadTile( './images/decal-door-03.png');
+	loadTile( './images/decal-door-04.png');
+		
+	loadTile( './images/decal-hack.png');
+	loadTile( './images/decal-pipes.png');	
+	loadTile( './images/decal-station-01.png');
+	loadTile( './images/decal-station-02.png');
+	loadTile( './images/decal-table.png');	
+	loadTile( './images/decal-teleporter.png');	
+
+	loadTile( './images/decal-spikes.png');
+	loadTile( './images/decal-sector-01.png');
+	loadTile( './images/decal-sector-02.png');
+	loadTile( './images/decal-slime.png');
+
+	loadTile( './images/decal-radiation.png');
+	loadTile( './images/decal-exit.png');
+	loadTile( './images/decal-desk.png');
+	loadTile( './images/decal-trash.png');
+	loadTile( './images/decal-plant.png');
+	loadTile( './images/decal-reactor.png');
+	loadTile( './images/inv-key-red.png');
+	loadTile( './images/inv-key-blu.png');
 
 }
 
-function loadTile(id, file)
+function loadTile(file)
 {
+	var id = gameData.tileCache.length;
+
 	Log('loading tile: '+id+' '+file);
 	gameData.tileCache[id] = new Image();
 	gameData.tileCache[id].onload = incrementCacheAndRun;
@@ -2639,6 +2697,13 @@ function loadImages()
 	loadCharImage(ENTITY_SENTRY_DYING_4, './images/sentry-007.png');
 	loadCharImage(ENTITY_SENTRY_DYING_5, './images/sentry-008.png');
 	loadCharImage(ENTITY_SENTRY_DEAD, './images/sentry-009.png');
+
+	loadCharImage(ENTITY_SENTRY_TELEPORTING_1, './images/sentry-010.png');
+	loadCharImage(ENTITY_SENTRY_TELEPORTING_2, './images/sentry-011.png');
+	loadCharImage(ENTITY_SENTRY_TELEPORTING_3, './images/sentry-012.png');
+	loadCharImage(ENTITY_SENTRY_TELEPORTING_4, './images/sentry-013.png');
+
+
 
 
 //Just in case
@@ -2923,6 +2988,20 @@ function Log(text)
 	console.log('['+time+']'+text);
 }
 
+
+function outputMap()
+{
+	world.currentMap.entities = [];
+	for (var i=0; i<world.currentMap.width; i++)
+	{
+		for (var j=0; j<world.currentMap.height; j++)
+		{
+			world.currentMap.tiles[i][j].switchTriggered = false;
+		}
+	}
+
+console.log(JSON.stringify(world.currentMap));
+}
 
 function resetStatistics()
 {
